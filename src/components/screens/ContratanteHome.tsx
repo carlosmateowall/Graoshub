@@ -1,16 +1,21 @@
-import { useEffect, useState, useCallback } from "react";
+import { lazy, Suspense, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { friendlyError } from "@/lib/friendlyError";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
-import { Package, MapPin, Warehouse, ShoppingCart, TrendingUp, CheckCircle2, Truck, Bell, Plus, ArrowRight, User, X } from "lucide-react";
+import { Package, MapPin, Warehouse, ShoppingCart, TrendingUp, CheckCircle2, Truck, Bell, Plus, ArrowRight, User, X, Navigation } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAppLayout } from "@/hooks/useAppLayout";
+import { notificar } from "@/lib/notificar";
+
+const TrackingMap = lazy(() => import("@/components/TrackingMap"));
 
 interface Carga { id: string; tipo_grao: string; quantidade: number; origem: string; destino: string; valor: number; status: string; }
 interface FreteAtivo { id: string; status: string; carga: Carga; }
+interface Proposta { id: string; carga_id: string; motorista_id: string; valor_proposta: number; mensagem: string | null; motoristaNome: string; motoristaAvatar: string | null; carga: Carga; }
 
 const ContratanteHome = () => {
   const { user, profile } = useAuth();
@@ -24,6 +29,9 @@ const ContratanteHome = () => {
   const [unread, setUnread] = useState(0);
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [trackingFrete, setTrackingFrete] = useState<FreteAtivo | null>(null);
+  const [propostas, setPropostas] = useState<Proposta[]>([]);
+  const [respondingId, setRespondingId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -42,6 +50,35 @@ const ContratanteHome = () => {
     }
     const { count } = await supabase.from("notificacoes").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("lida", false);
     setUnread(count ?? 0);
+
+    // Propostas pendentes para as cargas deste contratante
+    if (cargaIds.length > 0) {
+      const { data: rawPropostas } = await supabase
+        .from("propostas" as "fretes") // cast temporário — tabela nova, tipos ainda não gerados
+        .select("id, carga_id, motorista_id, valor_proposta, mensagem")
+        .in("carga_id", cargaIds)
+        .eq("status", "pendente")
+        .order("created_at", { ascending: false });
+
+      if (rawPropostas && cargas) {
+        const motoristasIds = [...new Set((rawPropostas as Array<{motorista_id: string}>).map(p => p.motorista_id))];
+        const { data: perfis } = await supabase.from("profiles").select("id, nome, avatar_url").in("id", motoristasIds);
+
+        const perfilMap = Object.fromEntries((perfis || []).map(p => [p.id, p]));
+        const cargaMap = Object.fromEntries(cargas.map(c => [c.id, c]));
+
+        setPropostas(
+          (rawPropostas as Array<{id:string;carga_id:string;motorista_id:string;valor_proposta:number;mensagem:string|null}>)
+            .filter(p => cargaMap[p.carga_id])
+            .map(p => ({
+              ...p,
+              motoristaNome: perfilMap[p.motorista_id]?.nome || "Motorista",
+              motoristaAvatar: perfilMap[p.motorista_id]?.avatar_url || null,
+              carga: cargaMap[p.carga_id] as Carga,
+            }))
+        );
+      }
+    }
     } catch {
       toast("Erro ao carregar dados. Tente novamente.");
     }
@@ -63,6 +100,38 @@ const ContratanteHome = () => {
 
   const statusLabel: Record<string, string> = { aceito: "Aceito", em_coleta: "Em Coleta", em_transito: "Em Transporte", aguardando_confirmacao: "Confirmar Recebimento" };
   const statusColor: Record<string, string> = { aceito: "bg-primary/10 text-primary", em_coleta: "bg-accent/15 text-accent-foreground", em_transito: "bg-info/15 text-info", aguardando_confirmacao: "bg-accent/20 text-accent-foreground" };
+
+  const handleAceitarProposta = async (proposta: Proposta) => {
+    setRespondingId(proposta.id);
+    const { data: freteId, error } = await supabase.rpc("accept_proposta" as "accept_frete", { _proposta_id: proposta.id });
+    if (error) {
+      toast("Erro ao aceitar proposta. Tente novamente.");
+    } else {
+      await notificar({
+        user_id: proposta.motorista_id,
+        titulo: "Proposta aceita!",
+        mensagem: `Sua proposta de R$ ${proposta.valor_proposta.toLocaleString("pt-BR")} para o frete de ${proposta.carga.tipo_grao} foi aceita.`,
+        url: `/fretes/${freteId}/status`,
+      });
+      toast("Proposta aceita! Frete criado.");
+      navigate(`/fretes/${freteId}/status`);
+    }
+    setRespondingId(null);
+  };
+
+  const handleRecusarProposta = async (proposta: Proposta) => {
+    setRespondingId(proposta.id);
+    await supabase.from("propostas" as "fretes").update({ status: "recusada" }).eq("id", proposta.id);
+    await notificar({
+      user_id: proposta.motorista_id,
+      titulo: "Proposta recusada",
+      mensagem: `Sua proposta de R$ ${proposta.valor_proposta.toLocaleString("pt-BR")} para o frete de ${proposta.carga.tipo_grao} foi recusada.`,
+      url: "/fretes",
+    });
+    toast("Proposta recusada.");
+    setPropostas(prev => prev.filter(p => p.id !== proposta.id));
+    setRespondingId(null);
+  };
 
   const handleCancelCarga = async () => {
     if (!cancelId || !online) { toast("Sem conexão"); return; }
@@ -117,18 +186,90 @@ const ContratanteHome = () => {
             <ArrowRight size={18} className="text-accent-foreground/50" />
           </button>
 
+          {propostas.length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <h2 className="text-[12px] lg:text-sm font-bold text-muted-foreground uppercase tracking-widest">Propostas de valor</h2>
+                <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">{propostas.length}</span>
+              </div>
+              <div className="flex flex-col gap-3">
+                {propostas.map(p => {
+                  const diff = p.valor_proposta - p.carga.valor;
+                  const isLower = diff < 0;
+                  return (
+                    <div key={p.id} className="bg-card rounded-2xl p-4 shadow-card-soft border border-primary/10">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/8 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          {p.motoristaAvatar
+                            ? <img src={p.motoristaAvatar} alt="" className="w-full h-full object-cover" />
+                            : <span className="text-sm font-bold text-primary">{p.motoristaNome[0]}</span>}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[14px] font-bold text-foreground block truncate">{p.motoristaNome}</span>
+                          <span className="text-[12px] text-muted-foreground">{p.carga.tipo_grao} · {p.carga.origem} → {p.carga.destino}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex-1 bg-muted/50 rounded-xl p-3">
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-0.5">Publicado</span>
+                          <span className="text-[15px] font-bold text-foreground">R$ {Number(p.carga.valor).toLocaleString("pt-BR")}</span>
+                        </div>
+                        <span className="text-muted-foreground/40 text-lg">→</span>
+                        <div className={`flex-1 rounded-xl p-3 ${isLower ? "bg-success/10" : "bg-destructive/10"}`}>
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-0.5">Proposta</span>
+                          <span className={`text-[15px] font-bold ${isLower ? "text-success" : "text-destructive"}`}>
+                            R$ {p.valor_proposta.toLocaleString("pt-BR")}
+                          </span>
+                        </div>
+                      </div>
+                      {p.mensagem && (
+                        <p className="text-xs text-muted-foreground bg-muted/40 rounded-lg px-3 py-2 mb-3 italic">"{p.mensagem}"</p>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleRecusarProposta(p)}
+                          disabled={respondingId === p.id}
+                          className="flex-1 h-10 rounded-xl border-2 border-border text-sm font-semibold text-muted-foreground bg-transparent cursor-pointer disabled:opacity-50 active:scale-[0.98] transition-all"
+                        >
+                          Recusar
+                        </button>
+                        <button
+                          onClick={() => handleAceitarProposta(p)}
+                          disabled={respondingId === p.id}
+                          className="flex-1 h-10 rounded-xl bg-success text-white text-sm font-bold border-none cursor-pointer disabled:opacity-50 active:scale-[0.98] transition-all shadow-sm"
+                        >
+                          {respondingId === p.id ? "..." : "Aceitar"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {fretesAtivos.length > 0 && (
             <div className="mb-6">
               <h2 className="text-[12px] lg:text-sm font-bold text-muted-foreground uppercase tracking-widest mb-3">Em andamento</h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {fretesAtivos.map((f) => (
-                  <button key={f.id} onClick={() => navigate(`/fretes/${f.id}/status`)} className="w-full bg-card rounded-2xl p-4 text-left cursor-pointer shadow-card-soft active:scale-[0.99] hover:shadow-float hover:-translate-y-0.5 transition-all duration-300">
-                    <div className="flex justify-between items-start mb-2.5">
-                      <span className="text-[15px] lg:text-base font-bold text-foreground">{f.carga.tipo_grao} — {f.carga.quantidade}t</span>
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] lg:text-[11px] font-bold ${statusColor[f.status] || "bg-muted text-muted-foreground"}`}>{statusLabel[f.status] || f.status}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-[13px] lg:text-sm text-muted-foreground"><MapPin size={12} className="text-primary/60" /><span>{f.carga.origem}</span><ArrowRight size={12} className="text-primary/40" /><span>{f.carga.destino}</span></div>
-                  </button>
+                  <div key={f.id} className="w-full bg-card rounded-2xl p-4 shadow-card-soft hover:shadow-float hover:-translate-y-0.5 transition-all duration-300">
+                    <button onClick={() => navigate(`/fretes/${f.id}/status`)} className="w-full text-left bg-transparent border-none p-0 cursor-pointer">
+                      <div className="flex justify-between items-start mb-2.5">
+                        <span className="text-[15px] lg:text-base font-bold text-foreground">{f.carga.tipo_grao} — {f.carga.quantidade}t</span>
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] lg:text-[11px] font-bold ${statusColor[f.status] || "bg-muted text-muted-foreground"}`}>{statusLabel[f.status] || f.status}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[13px] lg:text-sm text-muted-foreground"><MapPin size={12} className="text-primary/60" /><span>{f.carga.origem}</span><ArrowRight size={12} className="text-primary/40" /><span>{f.carga.destino}</span></div>
+                    </button>
+                    {["em_coleta", "em_transito"].includes(f.status) && (
+                      <button
+                        onClick={() => setTrackingFrete(f)}
+                        className="mt-3 w-full flex items-center justify-center gap-1.5 h-9 rounded-xl bg-primary/8 text-primary text-xs font-bold border-none cursor-pointer hover:bg-primary/15 transition-colors active:scale-[0.98]"
+                      >
+                        <Navigation size={13} /> Ver no mapa
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
@@ -183,6 +324,28 @@ const ContratanteHome = () => {
         </div>
       )}
     </div>
+
+    <Sheet open={!!trackingFrete} onOpenChange={(open) => !open && setTrackingFrete(null)}>
+      <SheetContent side="bottom" className="rounded-t-3xl pb-8">
+        <SheetHeader className="mb-4">
+          <SheetTitle className="text-base">
+            {trackingFrete?.carga.tipo_grao} — {trackingFrete?.carga.quantidade}t
+          </SheetTitle>
+          <p className="text-xs text-muted-foreground">
+            {trackingFrete?.carga.origem} → {trackingFrete?.carga.destino}
+          </p>
+        </SheetHeader>
+        {trackingFrete && (
+          <Suspense fallback={<div className="w-full h-56 rounded-2xl bg-muted animate-pulse" />}>
+            <TrackingMap
+              freteId={trackingFrete.id}
+              origem={trackingFrete.carga.origem}
+              destino={trackingFrete.carga.destino}
+            />
+          </Suspense>
+        )}
+      </SheetContent>
+    </Sheet>
 
     <Dialog open={!!cancelId} onOpenChange={(open) => !open && setCancelId(null)}>
       <DialogContent className="max-w-[440px] rounded-2xl">

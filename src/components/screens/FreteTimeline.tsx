@@ -3,10 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { friendlyError } from "@/lib/friendlyError";
-import { ArrowLeft, CheckCircle, Package, Truck as TruckIcon, MapPin, MessageCircle, XCircle, Clock } from "lucide-react";
+import { ArrowLeft, CheckCircle, Package, Truck as TruckIcon, MapPin, MessageCircle, XCircle, Clock, Navigation, NavigationOff } from "lucide-react";
 import RatingModal from "@/components/RatingModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAppLayout } from "@/hooks/useAppLayout";
+import { useMotoristaTracking } from "@/hooks/useMotoristaTracking";
 
 interface FreteData {
   id: string;
@@ -36,6 +37,7 @@ const FreteTimeline = () => {
   const [alreadyRated, setAlreadyRated] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const { isTracking, error: trackingError, startTracking, stopTracking } = useMotoristaTracking(freteId);
 
   const loadFrete = async () => {
     if (!freteId) return;
@@ -196,6 +198,33 @@ const FreteTimeline = () => {
             <p className="text-xs text-muted-foreground mt-1">O contratante precisa confirmar o recebimento da carga</p>
           </div>
         )}
+        {isMotorista && ["em_coleta", "em_transito"].includes(frete.status) && (
+          <div className="mb-3">
+            {trackingError && (
+              <p className="text-xs text-destructive mb-2 px-1">{trackingError}</p>
+            )}
+            <button
+              onClick={isTracking ? stopTracking : startTracking}
+              className={`w-full flex items-center justify-center gap-2 h-12 rounded-xl text-[15px] font-bold cursor-pointer border-none active:scale-[0.98] transition-all ${
+                isTracking
+                  ? "bg-success/10 text-success border-2 border-success/30"
+                  : "bg-primary text-primary-foreground shadow-md hover:opacity-90"
+              }`}
+            >
+              {isTracking ? (
+                <><NavigationOff size={16} /> Parar Rastreamento</>
+              ) : (
+                <><Navigation size={16} /> Compartilhar Localização</>
+              )}
+            </button>
+            {isTracking && (
+              <p className="text-xs text-success text-center mt-1.5 font-medium">
+                Localização sendo compartilhada com o contratante
+              </p>
+            )}
+          </div>
+        )}
+
         {freteId && (
           <button onClick={() => navigate(`/fretes/${freteId}/chat`)} className="w-full flex items-center justify-center gap-2 h-12 border-2 border-border rounded-xl text-[15px] font-semibold cursor-pointer bg-transparent text-foreground active:scale-[0.98] transition-all mb-3">
             <MessageCircle size={16} /> Chat

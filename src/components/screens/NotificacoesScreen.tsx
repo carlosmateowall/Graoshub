@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Bell } from "lucide-react";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { ArrowLeft, Bell, BellRing, BellOff } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Notificacao = Tables<"notificacoes">;
@@ -10,6 +11,7 @@ type Notificacao = Tables<"notificacoes">;
 const NotificacoesScreen = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { permission, requestPermission, isSupported } = usePushNotifications();
   const [notifs, setNotifs] = useState<Notificacao[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -60,6 +62,38 @@ const NotificacoesScreen = () => {
             <button onClick={markAllRead} className="text-xs font-bold text-primary bg-transparent border-none cursor-pointer px-3 py-3 min-h-[48px] rounded-lg hover:bg-primary/5 transition-colors">Marcar todas</button>
           )}
         </div>
+        {isSupported && permission === "default" && (
+          <button
+            onClick={requestPermission}
+            className="w-full flex items-center gap-3 p-4 rounded-2xl bg-primary/5 border-2 border-primary/20 mb-5 cursor-pointer active:scale-[0.98] transition-all text-left"
+          >
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <BellRing size={20} className="text-primary" />
+            </div>
+            <div className="flex-1">
+              <span className="text-sm font-bold text-foreground block">Ativar notificações</span>
+              <span className="text-xs text-muted-foreground">Receba alertas de novos fretes e propostas mesmo com o app em segundo plano</span>
+            </div>
+            <span className="text-xs font-bold text-primary flex-shrink-0">Ativar</span>
+          </button>
+        )}
+
+        {isSupported && permission === "denied" && (
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-muted/50 border border-border mb-5">
+            <BellOff size={18} className="text-muted-foreground flex-shrink-0" />
+            <p className="text-xs text-muted-foreground">
+              Notificações bloqueadas. Para ativar, clique no cadeado na barra de endereço do seu navegador e permita notificações.
+            </p>
+          </div>
+        )}
+
+        {isSupported && permission === "granted" && (
+          <div className="flex items-center gap-2 mb-5 px-1">
+            <BellRing size={14} className="text-success" />
+            <span className="text-xs font-semibold text-success">Notificações ativas</span>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex flex-col gap-3">{[1, 2, 3].map(i => <div key={i} className="h-20 skeleton-shimmer" />)}</div>
         ) : notifs.length === 0 ? (

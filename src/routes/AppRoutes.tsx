@@ -5,15 +5,14 @@ import AdminRoute from "@/components/AdminRoute";
 import AppLayout from "@/components/layouts/AppLayout";
 import RoleRedirect from "@/components/RoleRedirect";
 
-// Public screens (keep eager for fast first paint)
+// Landing page: eager para first paint público
 import LandingPage from "@/components/screens/LandingPage";
-import LoginScreen from "@/components/screens/LoginScreen";
-
-import SignupScreen from "@/components/screens/SignupScreen";
-import ProfileSelectScreen from "@/components/screens/ProfileSelectScreen";
-import ResetPasswordScreen from "@/components/screens/ResetPasswordScreen";
 
 // Lazy-loaded screens
+const LoginScreen = lazy(() => import("@/components/screens/LoginScreen"));
+const SignupScreen = lazy(() => import("@/components/screens/SignupScreen"));
+const ProfileSelectScreen = lazy(() => import("@/components/screens/ProfileSelectScreen"));
+const ResetPasswordScreen = lazy(() => import("@/components/screens/ResetPasswordScreen"));
 const TermosScreen = lazy(() => import("@/components/screens/TermosScreen"));
 const PrivacidadeScreen = lazy(() => import("@/components/screens/PrivacidadeScreen"));
 const PublicarCarga = lazy(() => import("@/components/screens/PublicarCarga"));

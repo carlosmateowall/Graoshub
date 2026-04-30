@@ -3,10 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { friendlyError } from "@/lib/friendlyError";
-import { ArrowLeft, MapPin, Scale, CalendarDays, Truck, User, RefreshCcw } from "lucide-react";
+import { ArrowLeft, MapPin, Scale, CalendarDays, Truck, User, RefreshCcw, HandCoins } from "lucide-react";
 import { useAppLayout } from "@/hooks/useAppLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Tables } from "@/integrations/supabase/types";
+import PropostaSheet from "@/components/PropostaSheet";
 
 type Carga = Tables<"cargas">;
 
@@ -22,6 +23,8 @@ const FreteDetalhe = () => {
 
   const [retornoCargas, setRetornoCargas] = useState<Carga[]>([]);
   const [retornoLoading, setRetornoLoading] = useState(false);
+  const [showProposta, setShowProposta] = useState(false);
+  const [propostaEnviada, setPropostaEnviada] = useState(false);
 
   useEffect(() => {
     if (!cargaId) return;
@@ -154,11 +157,43 @@ const FreteDetalhe = () => {
           className="w-full h-12 border-none rounded-xl text-[15px] font-bold cursor-pointer active:scale-[0.98] transition-all mb-3 disabled:opacity-50 bg-accent text-accent-foreground shadow-md hover:opacity-90">
           {loading ? "Aceitando..." : "Aceitar Frete"}
         </button>
+
+        {propostaEnviada ? (
+          <div className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-success/10 border-2 border-success/30 mb-3">
+            <span className="text-sm font-bold text-success">Proposta enviada ao contratante ✓</span>
+          </div>
+        ) : (
+          <button onClick={() => setShowProposta(true)}
+            className="w-full h-12 flex items-center justify-center gap-2 border-2 border-primary/30 rounded-xl text-[15px] font-semibold cursor-pointer text-primary bg-primary/5 active:scale-[0.98] transition-all mb-3 hover:bg-primary/10">
+            <HandCoins size={16} /> Negociar Valor
+          </button>
+        )}
+
         <button onClick={() => { toast("Frete recusado."); navigate("/fretes"); }}
           className="w-full h-12 border-2 border-border/50 rounded-xl text-[15px] font-semibold cursor-pointer text-muted-foreground bg-transparent active:scale-[0.98] transition-all">
           Recusar
         </button>
       </div>
+
+      {carga && (
+        <PropostaSheet
+          open={showProposta}
+          onClose={() => setShowProposta(false)}
+          carga={{
+            id: carga.id,
+            valor: Number(carga.valor),
+            tipo_grao: carga.tipo_grao,
+            origem: carga.origem,
+            destino: carga.destino,
+            contratante_id: carga.contratante_id,
+          }}
+          onSuccess={() => {
+            setShowProposta(false);
+            setPropostaEnviada(true);
+            toast("Proposta enviada! O contratante será notificado.");
+          }}
+        />
+      )}
     </div>
   );
 };

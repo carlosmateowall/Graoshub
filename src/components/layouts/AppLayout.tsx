@@ -6,6 +6,7 @@ import DesktopSidebar from "@/components/DesktopSidebar";
 import OfflineBanner from "@/components/OfflineBanner";
 import ToastNotification from "@/components/ToastNotification";
 import { supabase } from "@/integrations/supabase/client";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -29,6 +30,7 @@ const AppLayout = () => {
   const [toastMsg, setToastMsg] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  usePushNotifications(); // ativa listener global de notificações do browser
 
   const toast = useCallback((msg: string) => {
     setToastMsg(msg);
