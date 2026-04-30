@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* — GrãoHub Premium AgTech/Fintech — */
+    --primary: 153 60% 20%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 153 40% 14%;
+    --secondary-foreground: 0 0% 100%;
+
+    --background: 0 0% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 38 92% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 153 50% 36%;
+    --info: 210 80% 56%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 153 60% 20%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 153 25% 8%;
+    --sidebar-foreground: 210 40% 90%;
+    --sidebar-primary: 38 92% 50%;
+    --sidebar-primary-foreground: 30 80% 12%;
+    --sidebar-accent: 153 20% 14%;
+    --sidebar-accent-foreground: 210 40% 90%;
+    --sidebar-border: 153 15% 16%;
+    --sidebar-ring: 38 92% 50%;
+  }
+
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 92%;
+    --card: 222 40% 10%;
+    --card-foreground: 210 40% 92%;
+    --popover: 222 40% 10%;
+    --popover-foreground: 210 40% 92%;
+    --muted: 222 30% 14%;
+    --muted-foreground: 215 16% 56%;
+    --border: 222 25% 18%;
+    --input: 222 25% 18%;
+    --ring: 38 92% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    font-size: 16px;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  .card-shadow {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+  }
+  .card-shadow-lg {
+    box-shadow: 0 4px 24px rgba(27,67,50,0.08), 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .gradient-hero {
+    background: linear-gradient(168deg, hsl(153 25% 12%) 0%, hsl(153 39% 16%) 50%, hsl(153 35% 22%) 100%);
+  }
+  .gradient-marketplace {
+    background: linear-gradient(168deg, hsl(30 60% 14%) 0%, hsl(35 50% 22%) 50%, hsl(38 45% 28%) 100%);
+  }
+  .gradient-amber {
+    background: linear-gradient(135deg, hsl(38 92% 50%), hsl(45 95% 55%));
+  }
+  .text-gradient-gold {
+    background: linear-gradient(135deg, hsl(38 92% 50%), hsl(45 95% 55%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .glass {
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(16px) saturate(1.8);
+    -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  }
+}
+
+/* Scrollbar hiding */
+.phone-scroll::-webkit-scrollbar { display: none; }
+.phone-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Native safe area */
+.safe-area-container {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Animations */
+@keyframes fade-in {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-up {
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes scale-fade {
+  0% { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-fade-in { animation: fade-in 0.4s cubic-bezier(0.16,1,0.3,1); }
+.animate-slide-up { animation: slide-up 0.5s cubic-bezier(0.16,1,0.3,1); }
+.animate-scale-fade { animation: scale-fade 0.5s cubic-bezier(0.16,1,0.3,1); }
+
+/* Float */
+@keyframes float {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-10px); }
+}
+.animate-float { animation: float 4s ease-in-out infinite; }
+
+/* Timeline pulse */
+@keyframes tl-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(245,158,11,0); }
+}
+.animate-tl-pulse { animation: tl-pulse 2s infinite; }
+
+/* Shimmer */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(90deg, hsl(100 8% 93%) 25%, hsl(100 10% 96%) 50%, hsl(100 8% 93%) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.8s infinite;
+  border-radius: 12px;
+}
+
+/* Checkmark animation */
+@keyframes checkmark-draw {
+  0% { stroke-dashoffset: 24; }
+  100% { stroke-dashoffset: 0; }
+}

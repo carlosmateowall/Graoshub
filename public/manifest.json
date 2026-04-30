@@ -1,0 +1,26 @@
+{
+  "name": "GrãoHub",
+  "short_name": "GrãoHub",
+  "description": "Logística e Marketplace Agrícola",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f3ee",
+  "theme_color": "#1a3a2a",
+  "orientation": "portrait-primary",
+  "categories": ["business", "logistics"],
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
