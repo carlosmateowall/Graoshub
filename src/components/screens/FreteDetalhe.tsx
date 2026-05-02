@@ -3,19 +3,81 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { friendlyError } from "@/lib/friendlyError";
-import { ArrowLeft, MapPin, Scale, CalendarDays, Truck, User, RefreshCcw, HandCoins } from "lucide-react";
+import { ArrowLeft, MapPin, Scale, CalendarDays, Truck, User, RefreshCcw, HandCoins, ShieldAlert, ShieldCheck, Clock } from "lucide-react";
 import { useAppLayout } from "@/hooks/useAppLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Tables } from "@/integrations/supabase/types";
 import PropostaSheet from "@/components/PropostaSheet";
+import type { KycStatus } from "@/contexts/AuthContext";
 
 type Carga = Tables<"cargas">;
+
+const KYC_CONFIG: Record<KycStatus, { icon: typeof ShieldAlert; color: string; bg: string; title: string; desc: string; cta: string | null }> = {
+  nao_verificado: {
+    icon: ShieldAlert,
+    color: "text-amber-600",
+    bg: "bg-amber-50 border-amber-200",
+    title: "Verificação necessária",
+    desc: "Envie sua CNH e CRLV para poder aceitar fretes. A análise leva até 2 horas.",
+    cta: "Enviar documentos",
+  },
+  pendente: {
+    icon: Clock,
+    color: "text-info",
+    bg: "bg-info/5 border-info/20",
+    title: "Documentos em análise",
+    desc: "Recebemos seus documentos e estamos analisando. Em até 2 horas você poderá aceitar fretes.",
+    cta: null,
+  },
+  rejeitado: {
+    icon: ShieldAlert,
+    color: "text-destructive",
+    bg: "bg-destructive/5 border-destructive/20",
+    title: "Documentos rejeitados",
+    desc: "Seus documentos foram recusados. Reenvie fotos nítidas da CNH e CRLV para continuar.",
+    cta: "Reenviar documentos",
+  },
+  aprovado: {
+    icon: ShieldCheck,
+    color: "text-success",
+    bg: "bg-success/5 border-success/20",
+    title: "Verificado",
+    desc: "",
+    cta: null,
+  },
+};
+
+const KycGate = ({ status, onNavigate }: { status: KycStatus; onNavigate: () => void }) => {
+  const cfg = KYC_CONFIG[status];
+  const Icon = cfg.icon;
+  return (
+    <div className={`w-full rounded-2xl border-2 p-5 ${cfg.bg}`}>
+      <div className="flex items-start gap-3 mb-4">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-white/60`}>
+          <Icon size={20} className={cfg.color} />
+        </div>
+        <div>
+          <span className={`text-[14px] font-bold block ${cfg.color}`}>{cfg.title}</span>
+          <span className="text-[13px] text-muted-foreground leading-relaxed mt-0.5 block">{cfg.desc}</span>
+        </div>
+      </div>
+      {cfg.cta && (
+        <button
+          onClick={onNavigate}
+          className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-bold text-[14px] border-none cursor-pointer active:scale-[0.98] transition-all shadow-sm"
+        >
+          {cfg.cta}
+        </button>
+      )}
+    </div>
+  );
+};
 
 const FreteDetalhe = () => {
   const { id: cargaId } = useParams();
   const navigate = useNavigate();
   const { toast } = useAppLayout();
-  const { user } = useAuth();
+  const { user, role, profile } = useAuth();
   const [carga, setCarga] = useState<Carga | null>(null);
   const [contratanteNome, setContratanteNome] = useState("");
   const [contratanteAvatar, setContratanteAvatar] = useState<string | null>(null);
@@ -59,6 +121,12 @@ const FreteDetalhe = () => {
 
   const handleAceitar = async () => {
     if (!user || !carga) return;
+    // Guard server-side: nunca deve chegar aqui com kyc não aprovado,
+    // mas protege caso alguém contorne a UI
+    if (role === "motorista" && profile?.kyc_status !== "aprovado") {
+      toast("Verifique seus documentos antes de aceitar fretes.");
+      return;
+    }
     setLoading(true);
     try {
       const { data: freteId, error } = await supabase.rpc("accept_frete", {
@@ -153,26 +221,32 @@ const FreteDetalhe = () => {
           </div>
         )}
 
-        <button onClick={handleAceitar} disabled={loading}
-          className="w-full h-12 border-none rounded-xl text-[15px] font-bold cursor-pointer active:scale-[0.98] transition-all mb-3 disabled:opacity-50 bg-accent text-accent-foreground shadow-md hover:opacity-90">
-          {loading ? "Aceitando..." : "Aceitar Frete"}
-        </button>
-
-        {propostaEnviada ? (
-          <div className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-success/10 border-2 border-success/30 mb-3">
-            <span className="text-sm font-bold text-success">Proposta enviada ao contratante ✓</span>
-          </div>
+        {role === "motorista" && profile?.kyc_status !== "aprovado" ? (
+          <KycGate status={profile?.kyc_status ?? "nao_verificado"} onNavigate={() => navigate("/perfil/editar")} />
         ) : (
-          <button onClick={() => setShowProposta(true)}
-            className="w-full h-12 flex items-center justify-center gap-2 border-2 border-primary/30 rounded-xl text-[15px] font-semibold cursor-pointer text-primary bg-primary/5 active:scale-[0.98] transition-all mb-3 hover:bg-primary/10">
-            <HandCoins size={16} /> Negociar Valor
-          </button>
-        )}
+          <>
+            <button onClick={handleAceitar} disabled={loading}
+              className="w-full h-12 border-none rounded-xl text-[15px] font-bold cursor-pointer active:scale-[0.98] transition-all mb-3 disabled:opacity-50 bg-accent text-accent-foreground shadow-md hover:opacity-90">
+              {loading ? "Aceitando..." : "Aceitar Frete"}
+            </button>
 
-        <button onClick={() => { toast("Frete recusado."); navigate("/fretes"); }}
-          className="w-full h-12 border-2 border-border/50 rounded-xl text-[15px] font-semibold cursor-pointer text-muted-foreground bg-transparent active:scale-[0.98] transition-all">
-          Recusar
-        </button>
+            {propostaEnviada ? (
+              <div className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-success/10 border-2 border-success/30 mb-3">
+                <span className="text-sm font-bold text-success">Proposta enviada ao contratante ✓</span>
+              </div>
+            ) : (
+              <button onClick={() => setShowProposta(true)}
+                className="w-full h-12 flex items-center justify-center gap-2 border-2 border-primary/30 rounded-xl text-[15px] font-semibold cursor-pointer text-primary bg-primary/5 active:scale-[0.98] transition-all mb-3 hover:bg-primary/10">
+                <HandCoins size={16} /> Negociar Valor
+              </button>
+            )}
+
+            <button onClick={() => { toast("Frete recusado."); navigate("/fretes"); }}
+              className="w-full h-12 border-2 border-border/50 rounded-xl text-[15px] font-semibold cursor-pointer text-muted-foreground bg-transparent active:scale-[0.98] transition-all">
+              Recusar
+            </button>
+          </>
+        )}
       </div>
 
       {carga && (

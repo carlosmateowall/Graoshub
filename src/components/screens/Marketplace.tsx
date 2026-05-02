@@ -6,6 +6,7 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useAppLayout } from "@/hooks/useAppLayout";
 import { Wheat, FlaskConical, Sprout, Droplets, ShoppingCart, Plus, Search, SlidersHorizontal, X, Sparkles } from "lucide-react";
+import SEO from "@/components/SEO";
 
 const categories = [
   { icon: ShoppingCart, label: "Todos" },
@@ -120,6 +121,7 @@ const Marketplace = () => {
 
   return (
     <div className="absolute inset-0 flex flex-col bg-background">
+      <SEO title="Marketplace de Insumos Agrícolas" description="Compre e venda grãos, sementes, defensivos e fertilizantes direto com produtores. Marketplace agrícola com os melhores preços." path="/marketplace" />
       {/* Header */}
       <div className="rounded-b-3xl px-5 lg:px-8 pt-3 pb-5 flex-shrink-0 gradient-marketplace relative overflow-hidden">
         <div className="relative z-10 max-w-5xl mx-auto">

@@ -8,6 +8,7 @@ import { ArrowLeft, MapPin, User, Wheat, Flag, Ban, Heart } from "lucide-react";
 import { friendlyError } from "@/lib/friendlyError";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { Tables } from "@/integrations/supabase/types";
+import SEO from "@/components/SEO";
 
 type Anuncio = Tables<"anuncios">;
 
@@ -114,6 +115,13 @@ const AnuncioDetalheScreen = () => {
 
   return (
     <div className="absolute inset-0 bg-background overflow-y-auto phone-scroll">
+      <SEO
+        title={anuncio.nome}
+        description={anuncio.descricao ?? undefined}
+        image={anuncio.imagem_url}
+        path={`/marketplace/${anuncio.id}`}
+        type="product"
+      />
       <div className="w-full h-56 overflow-hidden relative bg-muted">
         {anuncio.imagem_url ? (
           <img src={anuncio.imagem_url} alt={anuncio.nome} className="w-full h-full object-cover" />

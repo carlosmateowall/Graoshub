@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import heroImg from "@/assets/hero-agro.jpg";
+import SEO from "@/components/SEO";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-y-auto">
+      <SEO path="/" />
       {/* ─── Navbar ─── */}
       <nav className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-3.5">

@@ -3,10 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import type { UserRole } from "@/types/app";
 
+export type KycStatus = "nao_verificado" | "pendente" | "aprovado" | "rejeitado";
+
 interface AuthState {
   user: User | null;
   session: Session | null;
-  profile: { nome: string; telefone: string; avatar_url: string; cidade: string } | null;
+  profile: { nome: string; telefone: string; avatar_url: string; cidade: string; kyc_status: KycStatus } | null;
   role: UserRole | null;
   loading: boolean;
 }
@@ -41,10 +43,10 @@ async function fetchRole(userId: string): Promise<UserRole | null> {
 async function fetchProfile(userId: string) {
   const { data } = await supabase
     .from("profiles")
-    .select("nome, telefone, avatar_url, cidade")
+    .select("nome, telefone, avatar_url, cidade, kyc_status")
     .eq("id", userId)
     .single();
-  return data;
+  return data as { nome: string; telefone: string; avatar_url: string; cidade: string; kyc_status: KycStatus } | null;
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {

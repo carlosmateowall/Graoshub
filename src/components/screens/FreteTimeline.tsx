@@ -3,11 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { friendlyError } from "@/lib/friendlyError";
-import { ArrowLeft, CheckCircle, Package, Truck as TruckIcon, MapPin, MessageCircle, XCircle, Clock, Navigation, NavigationOff } from "lucide-react";
+import { ArrowLeft, CheckCircle, Package, Truck as TruckIcon, MapPin, MessageCircle, XCircle, Clock, Navigation, NavigationOff, Gavel } from "lucide-react";
 import RatingModal from "@/components/RatingModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAppLayout } from "@/hooks/useAppLayout";
 import { useMotoristaTracking } from "@/hooks/useMotoristaTracking";
+import { notificar } from "@/lib/notificar";
 
 interface FreteData {
   id: string;
@@ -37,6 +38,11 @@ const FreteTimeline = () => {
   const [alreadyRated, setAlreadyRated] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [showDisputa, setShowDisputa] = useState(false);
+  const [motivoDisputa, setMotivoDisputa] = useState("");
+  const [descDisputa, setDescDisputa] = useState("");
+  const [openingDisputa, setOpeningDisputa] = useState(false);
+  const [disputaAberta, setDisputaAberta] = useState(false);
   const { isTracking, error: trackingError, startTracking, stopTracking } = useMotoristaTracking(freteId);
 
   const loadFrete = async () => {
@@ -54,10 +60,18 @@ const FreteTimeline = () => {
     if (data) setAlreadyRated(true);
   };
 
+  const checkDisputa = async () => {
+    if (!freteId) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (supabase as any).from("disputas").select("id").eq("frete_id", freteId).eq("status", "pendente").maybeSingle();
+    if (data) setDisputaAberta(true);
+  };
+
   useEffect(() => {
     if (!freteId) return;
     loadFrete();
     checkRating();
+    checkDisputa();
     const channel = supabase.channel(`frete-${freteId}`)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "fretes", filter: `id=eq.${freteId}` }, () => loadFrete())
       .subscribe();
@@ -92,6 +106,37 @@ const FreteTimeline = () => {
     } catch {
       toast("Erro de conexão. Tente novamente.");
     }
+  };
+
+  const handleOpenDisputa = async () => {
+    if (!frete || !user || !motivoDisputa.trim()) return;
+    setOpeningDisputa(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).rpc("open_disputa", {
+        _frete_id: frete.id,
+        _motivo: motivoDisputa.trim(),
+        _descricao: descDisputa.trim() || null,
+      });
+      if (error) {
+        toast(friendlyError(error.message));
+      } else {
+        const outroId = isMotorista ? frete.carga.contratante_id : frete.motorista_id;
+        await notificar({
+          user_id: outroId,
+          titulo: "Disputa aberta",
+          mensagem: `Uma disputa foi aberta no frete ${frete.carga.tipo_grao} (${frete.carga.origem} → ${frete.carga.destino}).`,
+          url: `/fretes/${frete.id}/status`,
+        });
+        toast("Disputa aberta. Nossa equipe irá analisar em breve.");
+        setDisputaAberta(true);
+        setShowDisputa(false);
+        setFrete(prev => prev ? { ...prev, status: "em_disputa" } : prev);
+      }
+    } catch {
+      toast("Erro de conexão. Tente novamente.");
+    }
+    setOpeningDisputa(false);
   };
 
   const handleCancel = async () => {
@@ -235,6 +280,18 @@ const FreteTimeline = () => {
             <XCircle size={16} /> Cancelar Frete
           </button>
         )}
+        {["em_coleta", "em_transito", "aguardando_confirmacao"].includes(frete.status) && (user && (isMotorista || isContratante)) && !disputaAberta && (
+          <button onClick={() => setShowDisputa(true)} className="w-full flex items-center justify-center gap-2 h-10 mt-2 border border-destructive/30 rounded-xl text-[13px] font-semibold cursor-pointer bg-transparent text-destructive/70 active:scale-[0.98] transition-all">
+            <Gavel size={14} /> Abrir Disputa
+          </button>
+        )}
+        {frete.status === "em_disputa" && (
+          <div className="mt-2 rounded-2xl border-2 border-destructive/30 bg-destructive/5 p-4 text-center">
+            <Gavel size={20} className="text-destructive mx-auto mb-2" />
+            <p className="text-sm font-bold text-foreground">Disputa em análise</p>
+            <p className="text-xs text-muted-foreground mt-1">Nossa equipe está analisando o caso. Você será notificado com a resolução.</p>
+          </div>
+        )}
         {frete.status === "entregue" && (
           <div className="text-center py-6 animate-scale-fade">
             <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4"><CheckCircle size={32} className="text-success" /></div>
@@ -258,6 +315,55 @@ const FreteTimeline = () => {
       {user && (
         <RatingModal open={showRating} onClose={() => setShowRating(false)} freteId={frete.id} avaliadorId={user.id} avaliadoId={avaliadoId} onSuccess={() => { setAlreadyRated(true); toast("Avaliação enviada!"); }} />
       )}
+      <Dialog open={showDisputa} onOpenChange={(o) => { if (!o) { setShowDisputa(false); setMotivoDisputa(""); setDescDisputa(""); } }}>
+        <DialogContent className="max-w-[340px] rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg text-destructive">Abrir Disputa</DialogTitle>
+            <DialogDescription>Descreva o problema para nossa equipe analisar. O frete ficará pausado até a resolução.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 mt-1">
+            <div>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Motivo</label>
+              <select
+                value={motivoDisputa}
+                onChange={e => setMotivoDisputa(e.target.value)}
+                className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <option value="">Selecione um motivo</option>
+                <option value="Produto diferente do combinado">Produto diferente do combinado</option>
+                <option value="Motorista não compareceu">Motorista não compareceu</option>
+                <option value="Dano à carga">Dano à carga</option>
+                <option value="Valor incorreto">Valor incorreto</option>
+                <option value="Fraude ou golpe">Fraude ou golpe</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Detalhes (opcional)</label>
+              <textarea
+                value={descDisputa}
+                onChange={e => setDescDisputa(e.target.value)}
+                rows={3}
+                placeholder="Descreva o problema com mais detalhes..."
+                className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => { setShowDisputa(false); setMotivoDisputa(""); setDescDisputa(""); }} className="flex-1 py-3 rounded-lg bg-card text-foreground font-semibold border-none cursor-pointer shadow-sm">
+                Cancelar
+              </button>
+              <button
+                onClick={handleOpenDisputa}
+                disabled={openingDisputa || !motivoDisputa}
+                className="flex-1 py-3 rounded-lg bg-destructive text-destructive-foreground font-semibold border-none cursor-pointer disabled:opacity-50"
+              >
+                {openingDisputa ? "Enviando..." : "Abrir Disputa"}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={showCancel} onOpenChange={setShowCancel}>
         <DialogContent className="max-w-[340px] rounded-2xl">
           <DialogHeader>

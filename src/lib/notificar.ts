@@ -8,7 +8,7 @@ export async function notificar(params: {
 }) {
   const { user_id, titulo, mensagem, url } = params;
 
-  await supabase.from("notificacoes").insert({ user_id, titulo, mensagem, lida: false });
+  await supabase.from("notificacoes").insert({ user_id, titulo, mensagem, lida: false, url: url ?? null });
 
   // Push best-effort — não bloqueia nem propaga erro
   supabase.functions

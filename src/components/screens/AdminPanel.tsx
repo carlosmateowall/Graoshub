@@ -12,6 +12,7 @@ import {
   X,
   Landmark,
   Radar,
+  Gavel,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppLayout } from "@/hooks/useAppLayout";
@@ -22,11 +23,12 @@ import AdminFretes from "@/components/admin/AdminFretes";
 import AdminKyc from "@/components/admin/AdminKyc";
 import AdminFinanceiro from "@/components/admin/AdminFinanceiro";
 import AdminRadar from "@/components/admin/AdminRadar";
+import AdminDisputas from "@/components/admin/AdminDisputas";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type View = "dashboard" | "users" | "kyc" | "fretes" | "denuncias" | "financeiro" | "radar";
+type View = "dashboard" | "users" | "kyc" | "fretes" | "denuncias" | "financeiro" | "radar" | "disputas";
 
 const menuItems: { id: View; label: string; icon: React.ElementType }[] = [
   { id: "dashboard", label: "Dashboard", icon: BarChart3 },
@@ -36,6 +38,7 @@ const menuItems: { id: View; label: string; icon: React.ElementType }[] = [
   { id: "financeiro", label: "Gestão Financeira", icon: Landmark },
   { id: "radar", label: "Radar ao Vivo", icon: Radar },
   { id: "denuncias", label: "Denúncias e Suporte", icon: AlertTriangle },
+  { id: "disputas", label: "Disputas de Frete", icon: Gavel },
 ];
 
 const viewTitles: Record<View, string> = {
@@ -46,6 +49,7 @@ const viewTitles: Record<View, string> = {
   financeiro: "Gestão Financeira",
   radar: "Radar ao Vivo",
   denuncias: "Denúncias e Suporte",
+  disputas: "Disputas de Frete",
 };
 
 const AdminPanel = () => {
@@ -81,6 +85,8 @@ const AdminPanel = () => {
         return <AdminRadar toast={toast} />;
       case "denuncias":
         return <AdminDenuncias toast={toast} />;
+      case "disputas":
+        return <AdminDisputas toast={toast} />;
     }
   };
 

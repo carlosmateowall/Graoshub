@@ -6,7 +6,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { ArrowLeft, Bell, BellRing, BellOff } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
-type Notificacao = Tables<"notificacoes">;
+type Notificacao = Tables<"notificacoes"> & { url?: string | null };
 
 const NotificacoesScreen = () => {
   const navigate = useNavigate();
@@ -28,6 +28,11 @@ const NotificacoesScreen = () => {
   const markRead = async (id: string) => {
     await supabase.from("notificacoes").update({ lida: true }).eq("id", id);
     setNotifs(prev => prev.map(n => n.id === id ? { ...n, lida: true } : n));
+  };
+
+  const handleClick = async (n: Notificacao) => {
+    if (!n.lida) await markRead(n.id);
+    if (n.url) navigate(n.url);
   };
 
   const markAllRead = async () => {
@@ -105,12 +110,13 @@ const NotificacoesScreen = () => {
         ) : (
           <div className="flex flex-col gap-2.5">
             {notifs.map(n => (
-              <button key={n.id} onClick={() => !n.lida && markRead(n.id)}
-                className={`w-full text-left p-4 rounded-2xl cursor-pointer transition-colors min-h-[64px] ${n.lida ? "bg-card shadow-sm" : "bg-primary/5 shadow-card-soft border border-primary/15"}`}>
+              <button key={n.id} onClick={() => handleClick(n)}
+                className={`w-full text-left p-4 rounded-2xl transition-colors min-h-[64px] ${n.url ? "cursor-pointer active:scale-[0.99]" : "cursor-default"} ${n.lida ? "bg-card shadow-sm" : "bg-primary/5 shadow-card-soft border border-primary/15"}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
                     <span className={`text-[13px] font-semibold block ${n.lida ? "text-muted-foreground" : "text-foreground"}`}>{n.titulo}</span>
                     <span className="text-[12px] text-muted-foreground mt-0.5 block">{n.mensagem}</span>
+                    {n.url && <span className="text-[11px] text-primary font-semibold mt-1 block">Ver detalhes →</span>}
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     <span className="text-[11px] text-muted-foreground">{fmtTime(n.created_at)}</span>
