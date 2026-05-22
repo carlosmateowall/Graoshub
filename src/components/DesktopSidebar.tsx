@@ -52,10 +52,11 @@ const DesktopSidebar = ({ items, active, onNavigate, onLogout }: DesktopSidebarP
             <Wheat size={22} className="text-sidebar-primary" />
           </div>
           <div>
-            <h1 className="text-lg font-extrabold text-sidebar-foreground tracking-tight leading-none">
-              Grão<span className="text-sidebar-primary">Hub</span>
+            <h1 className="text-lg font-extrabold tracking-tight leading-none">
+              <span className="text-ring">Grão</span>
+              <span className="text-sidebar-primary">Hub</span>
             </h1>
-            <p className="text-[10px] text-sidebar-foreground/40 tracking-widest uppercase">Logística Agrícola</p>
+            <p className="text-[10px] text-sidebar-foreground/40 tracking-widest uppercase mt-0.5">Logística Agrícola</p>
           </div>
         </div>
       </div>
@@ -80,7 +81,7 @@ const DesktopSidebar = ({ items, active, onNavigate, onLogout }: DesktopSidebarP
       )}
 
       {/* Nav items */}
-      <nav className="flex-1 px-3 space-y-1">
+      <nav className="flex-1 px-3 space-y-0.5">
         <p className="text-[10px] font-bold text-sidebar-foreground/30 uppercase tracking-widest px-3 mb-2">Menu</p>
         {items.map((item) => {
           const isActive = active === item.path;
@@ -90,12 +91,15 @@ const DesktopSidebar = ({ items, active, onNavigate, onLogout }: DesktopSidebarP
             <button
               key={item.path}
               onClick={() => onNavigate(item.path)}
-              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer border-none transition-all text-left group ${
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer border-none transition-all text-left relative ${
                 isActive
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
-                  : "bg-transparent text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "bg-transparent text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
               }`}
             >
+              {isActive && (
+                <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-sidebar-primary" />
+              )}
               <div className="relative">
                 <IconComp size={18} strokeWidth={isActive ? 2.2 : 1.6} />
                 {showBadge && (
@@ -112,7 +116,7 @@ const DesktopSidebar = ({ items, active, onNavigate, onLogout }: DesktopSidebarP
         {/* Notifications shortcut */}
         <button
           onClick={() => onNavigate("/notificacoes")}
-          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer border-none bg-transparent text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all text-left"
+          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer border-none bg-transparent text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all text-left"
         >
           <div className="relative">
             <Bell size={18} strokeWidth={1.6} />
