@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Home, Package, Truck, ShoppingCart, Map, User, Settings, Bell, MapPin } from "lucide-react";
 
 interface BottomNavProps {
@@ -44,7 +43,7 @@ const BottomNav = ({ items, active, onNavigate }: BottomNavProps) => {
   }, [user]);
 
   return (
-    <div className="bg-card/95 backdrop-blur-xl border-t border-border/60 flex items-center justify-around px-1 pb-6 pt-2.5 flex-shrink-0 relative z-[100]">
+    <div className="bg-sidebar border-t border-sidebar-border flex items-center justify-around px-1 pb-6 pt-2.5 flex-shrink-0 relative z-[100]">
       {items.map((item) => {
         const isActive = active === item.path;
         const showBadge = item.path === "/perfil" && unreadCount > 0;
@@ -54,13 +53,13 @@ const BottomNav = ({ items, active, onNavigate }: BottomNavProps) => {
             key={item.path}
             onClick={() => onNavigate(item.path)}
             aria-label={item.label}
-            className={`flex flex-col items-center gap-1 px-3 py-1.5 border-none bg-transparent cursor-pointer rounded-xl flex-1 transition-all duration-200 relative min-h-[48px] ${isActive ? "" : "opacity-40 hover:opacity-60"}`}
+            className="flex flex-col items-center gap-1 px-3 py-1.5 border-none bg-transparent cursor-pointer rounded-xl flex-1 transition-all duration-200 relative min-h-[48px]"
           >
-            <div className={`relative flex items-center justify-center w-10 h-8 rounded-full transition-all duration-300 ${isActive ? "bg-primary/10" : ""}`}>
+            <div className={`relative flex items-center justify-center w-10 h-8 rounded-full transition-all duration-300 ${isActive ? "bg-sidebar-primary/15" : ""}`}>
               <IconComp
                 size={20}
                 strokeWidth={isActive ? 2.2 : 1.6}
-                className={`transition-colors duration-200 ${isActive ? "text-primary" : "text-muted-foreground"}`}
+                className={`transition-colors duration-200 ${isActive ? "text-sidebar-primary" : "text-sidebar-foreground/40"}`}
               />
               {showBadge && (
                 <span className="absolute -top-1 -right-1.5 min-w-[16px] h-4 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center px-1">
@@ -68,7 +67,7 @@ const BottomNav = ({ items, active, onNavigate }: BottomNavProps) => {
                 </span>
               )}
             </div>
-            <span className={`text-[10px] font-semibold tracking-wide transition-colors duration-200 ${isActive ? "text-primary" : "text-muted-foreground"}`}>
+            <span className={`text-[10px] font-semibold tracking-wide transition-colors duration-200 ${isActive ? "text-sidebar-primary" : "text-sidebar-foreground/40"}`}>
               {item.label}
             </span>
           </button>
