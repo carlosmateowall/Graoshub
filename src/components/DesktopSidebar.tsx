@@ -53,7 +53,7 @@ const DesktopSidebar = ({ items, active, onNavigate, onLogout }: DesktopSidebarP
           </div>
           <div>
             <h1 className="text-lg font-extrabold tracking-tight leading-none">
-              <span className="text-ring">Grão</span>
+              <span className="text-verde-400">Grão</span>
               <span className="text-sidebar-primary">Hub</span>
             </h1>
             <p className="text-[10px] text-sidebar-foreground/40 tracking-widest uppercase mt-0.5">Logística Agrícola</p>
