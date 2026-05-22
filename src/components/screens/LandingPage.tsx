@@ -2,7 +2,6 @@ import { Wheat, Truck, Package, MapPin, ShieldCheck, TrendingUp, ArrowRight, Bar
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import heroImg from "@/assets/hero-agro.jpg";
 import SEO from "@/components/SEO";
 
 const LandingPage = () => {
@@ -22,12 +21,9 @@ const LandingPage = () => {
       {/* ─── Navbar ─── */}
       <nav className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-3.5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-              <Wheat size={20} className="text-primary-foreground" />
-            </div>
-            <span className="text-xl font-extrabold tracking-tight text-foreground">
-              Grão<span className="text-accent">Hub</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xl font-extrabold tracking-tight">
+              <span className="text-primary">Grão</span><span className="text-accent">Hub</span>
             </span>
           </div>
 
@@ -47,7 +43,7 @@ const LandingPage = () => {
             <Button variant="outline" size="sm" onClick={() => navigate("/login")} className="font-semibold">
               Entrar
             </Button>
-            <Button size="sm" onClick={() => navigate("/cadastro")} className="font-semibold">
+            <Button variant="accent" size="sm" onClick={() => navigate("/cadastro")} className="font-semibold">
               Criar Conta
             </Button>
           </div>
@@ -55,54 +51,76 @@ const LandingPage = () => {
       </nav>
 
       {/* ─── Hero ─── */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <img src={heroImg} alt="Campos de trigo com caminhão" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/40" />
-        </div>
+      <section className="gradient-hero relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 80% 60% at 70% 50%, rgba(74,222,128,.06) 0%, transparent 70%)" }} />
 
-        <div className="relative mx-auto max-w-7xl px-6 py-24 lg:py-36 flex flex-col lg:flex-row items-center gap-12">
-          <div className="flex-1 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider mb-6">
-              <Wheat size={14} /> Plataforma Agro #1
-            </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] text-foreground mb-6">
-              Conectando o Campo à Estrada com{" "}
-              <span className="text-primary">Inteligência</span>
-            </h1>
-            <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed mb-10 max-w-xl">
-              A plataforma definitiva para produtores rurais encontrarem motoristas confiáveis, e transportadores acharem as melhores cargas.
-            </p>
+        <div className="relative mx-auto max-w-7xl px-6 py-24 lg:py-36">
+          <div className="flex flex-col lg:flex-row items-center gap-12">
+            <div className="flex-1 max-w-2xl">
+              <div className="flex items-center gap-2 mb-6">
+                <span className="block w-6 h-[2px] rounded bg-verde-400" />
+                <span className="bh-eyebrow text-verde-400">Plataforma de Fretes e Insumos Agrícolas</span>
+              </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button
-                size="lg"
-                onClick={() => handleCTA("contratante")}
-                className="text-base font-bold px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
-              >
-                <Wheat size={20} className="mr-2" />
-                Sou Produtor / Armazém
-                <ArrowRight size={18} className="ml-2" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => handleCTA("motorista")}
-                className="text-base font-bold px-8 py-6 rounded-xl border-2 border-accent text-accent-foreground bg-accent hover:bg-accent/90 shadow-lg hover:shadow-xl transition-all"
-              >
-                <Truck size={20} className="mr-2" />
-                Sou Motorista
-                <ArrowRight size={18} className="ml-2" />
-              </Button>
+              <h1 className="bh-display text-4xl sm:text-5xl lg:text-[62px] text-primary-foreground mb-6 max-w-xl">
+                Conectando o Campo à Estrada com Inteligência
+              </h1>
+
+              <p className="text-lg text-sidebar-foreground/70 leading-relaxed mb-10 max-w-xl">
+                A plataforma definitiva para produtores rurais encontrarem motoristas confiáveis, e transportadores acharem as melhores cargas.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button
+                  variant="accent"
+                  size="lg"
+                  onClick={() => handleCTA("contratante")}
+                  className="text-base font-bold px-8 rounded-xl"
+                >
+                  <Wheat size={20} />
+                  Sou Produtor / Armazém
+                  <ArrowRight size={18} />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => handleCTA("motorista")}
+                  className="text-base font-bold px-8 rounded-xl border-sidebar-border text-primary-foreground bg-transparent hover:bg-sidebar-accent"
+                >
+                  <Truck size={20} />
+                  Sou Motorista
+                  <ArrowRight size={18} />
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-8 mt-10 text-sm text-sidebar-foreground/50">
+                <div className="flex items-center gap-2"><ShieldCheck size={16} className="text-verde-400" /> 100% Seguro</div>
+                <div className="flex items-center gap-2"><TrendingUp size={16} className="text-verde-400" /> Sem taxas ocultas</div>
+              </div>
             </div>
 
-            <div className="flex items-center gap-8 mt-10 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2"><ShieldCheck size={16} className="text-success" /> 100% Seguro</div>
-              <div className="flex items-center gap-2"><TrendingUp size={16} className="text-primary" /> Sem taxas ocultas</div>
-            </div>
+            <div className="hidden lg:block flex-1" />
           </div>
 
-          <div className="hidden lg:block flex-1" />
+          {/* Stats */}
+          <div className="flex flex-wrap gap-x-12 gap-y-6 mt-16 pt-10 border-t border-sidebar-border">
+            <div>
+              <div className="bh-display text-3xl text-primary-foreground">12 mil</div>
+              <div className="text-sm text-sidebar-foreground/50 mt-1">produtores ativos</div>
+            </div>
+            <div>
+              <div className="bh-display text-3xl text-primary-foreground">R$ 480 M</div>
+              <div className="text-sm text-sidebar-foreground/50 mt-1">em fretes negociados</div>
+            </div>
+            <div>
+              <div className="bh-display text-3xl text-primary-foreground">98%</div>
+              <div className="text-sm text-sidebar-foreground/50 mt-1">fretes concluídos</div>
+            </div>
+            <div>
+              <div className="bh-display text-3xl text-ouro">4.9★</div>
+              <div className="text-sm text-sidebar-foreground/50 mt-1">avaliação média</div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -110,7 +128,7 @@ const LandingPage = () => {
       <section className="py-20 lg:py-28">
         <div className="mx-auto max-w-7xl px-6">
           <div className="text-center mb-16">
-            <span className="text-xs font-bold uppercase tracking-wider text-primary">Feito para o agro</span>
+            <span className="bh-eyebrow text-primary">Feito para o agro</span>
             <h2 className="text-3xl lg:text-4xl font-extrabold text-foreground mt-3">Uma plataforma, duas soluções</h2>
             <p className="text-muted-foreground mt-3 max-w-lg mx-auto">Seja produtor ou transportador, o GrãoHub tem tudo que você precisa para operar com eficiência.</p>
           </div>
@@ -163,7 +181,7 @@ const LandingPage = () => {
       <section id="como-funciona" className="py-20 lg:py-28 bg-card">
         <div className="mx-auto max-w-7xl px-6">
           <div className="text-center mb-16">
-            <span className="text-xs font-bold uppercase tracking-wider text-primary">Simples e rápido</span>
+            <span className="bh-eyebrow text-primary">Simples e rápido</span>
             <h2 className="text-3xl lg:text-4xl font-extrabold text-foreground mt-3">Como Funciona</h2>
             <p className="text-muted-foreground mt-3 max-w-lg mx-auto">Em três passos, conectamos produtores e motoristas de forma eficiente.</p>
           </div>
@@ -193,7 +211,7 @@ const LandingPage = () => {
         <div className="mx-auto max-w-7xl px-6">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-accent">Novo</span>
+              <span className="bh-eyebrow text-accent">Novo</span>
               <h2 className="text-3xl lg:text-4xl font-extrabold text-foreground mt-3 mb-5">Marketplace de Insumos Agrícolas</h2>
               <p className="text-muted-foreground leading-relaxed mb-8">Compre e venda sementes, fertilizantes, defensivos e equipamentos diretamente na plataforma. Negocie com produtores e fornecedores de todo o Brasil.</p>
               <div className="flex flex-col gap-4">
@@ -233,7 +251,7 @@ const LandingPage = () => {
       <section id="beneficios" className="py-20 lg:py-28 bg-primary text-primary-foreground">
         <div className="mx-auto max-w-7xl px-6">
           <div className="text-center mb-16">
-            <span className="text-xs font-bold uppercase tracking-wider text-accent">Vantagens</span>
+            <span className="bh-eyebrow text-accent">Vantagens</span>
             <h2 className="text-3xl lg:text-4xl font-extrabold mt-3">Por Que Escolher o GrãoHub?</h2>
           </div>
 
