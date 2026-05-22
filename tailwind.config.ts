@@ -12,7 +12,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Plus Jakarta Sans", "system-ui", "-apple-system", "sans-serif"],
+        sans: ["DM Sans", "system-ui", "-apple-system", "sans-serif"],
+        display: ["Fraunces", "serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -60,6 +61,19 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        /* Named semantic colors for direct usage */
+        "verde-900": "#0d2818",
+        "verde-700": "#1a4f2e",
+        "verde-500": "#2f7a4a",
+        "verde-400": "#4ade80",
+        "verde-200": "#c7e9d2",
+        "ouro":      "#c8992a",
+        "ouro-soft": "#f3e4b8",
+        "canvas-soft": "#f2ede0",
+        "canvas-warm": "#faf5e7",
+        "ink":       "#1a2a1e",
+        "ink-soft":  "#41534a",
+        "border-warm": "#e6dec9",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -69,8 +83,8 @@ export default {
         "2xl": "24px",
       },
       boxShadow: {
-        "card-soft": "0 4px 20px rgba(0, 0, 0, 0.04)",
-        "float": "0 10px 40px rgba(0, 0, 0, 0.08)",
+        "card-soft": "0 1px 2px rgba(26,42,30,.05), 0 1px 1px rgba(26,42,30,.03)",
+        "float":     "0 18px 36px -18px rgba(13,40,24,.32), 0 4px 8px rgba(26,42,30,.04)",
       },
       keyframes: {
         "accordion-down": {
